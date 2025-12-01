@@ -16,212 +16,333 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for branding and styling
+# Custom CSS for branding and styling - Clean Professional Theme
 st.markdown("""
 <style>
-    /* Main header branding */
+    /* ========== GLOBAL THEME ========== */
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    
+    /* Main content area */
+    .main .block-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 2rem 3rem;
+        margin: 1rem;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    /* ========== HEADER BRANDING ========== */
     .main-header {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%);
-        padding: 1.5rem 2rem;
-        border-radius: 15px;
+        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+        padding: 2rem;
+        border-radius: 16px;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        text-align: center;
     }
     
     .brand-title {
-        color: #ffffff;
-        font-size: 2.8rem;
-        font-weight: 700;
+        color: #ffffff !important;
+        font-size: 3rem;
+        font-weight: 800;
         margin: 0;
-        text-align: center;
+        letter-spacing: 3px;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
     .brand-subtitle {
-        color: #a8d5ff;
-        font-size: 1.1rem;
-        text-align: center;
+        color: #dfe6e9 !important;
+        font-size: 1.2rem;
         margin-top: 0.5rem;
         font-weight: 400;
+        letter-spacing: 1px;
     }
     
     .brand-tagline {
-        color: #ffd700;
-        font-size: 0.9rem;
-        text-align: center;
-        margin-top: 0.3rem;
+        color: #fdcb6e !important;
+        font-size: 1rem;
+        margin-top: 0.5rem;
         font-style: italic;
     }
     
-    /* Card styling */
-    .metric-card {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #1e3a5f;
-        margin-bottom: 0.5rem;
-    }
-    
-    /* Section headers */
+    /* ========== SECTION HEADERS ========== */
     .section-header {
-        background: linear-gradient(90deg, #1e3a5f, transparent);
-        color: white;
-        padding: 0.8rem 1.2rem;
-        border-radius: 8px;
-        margin: 1.5rem 0 1rem 0;
-        font-weight: 600;
-    }
-    
-    /* Success/Info boxes */
-    .success-box {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        border: 1px solid #28a745;
+        background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+        color: #ffffff !important;
+        padding: 1rem 1.5rem;
         border-radius: 10px;
-        padding: 1rem;
-        margin: 1rem 0;
+        margin: 2rem 0 1rem 0;
+        font-weight: 700;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(108,92,231,0.3);
     }
     
-    /* Stats container */
-    .stats-container {
-        background: #f8f9fa;
+    /* ========== INFO BOXES ========== */
+    .success-box {
+        background: linear-gradient(135deg, #00b894, #00cec9);
+        border: none;
         border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 1.2rem 1.5rem;
+        margin: 1rem 0;
+        color: #ffffff !important;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0,184,148,0.3);
     }
     
-    /* Download buttons styling */
+    .success-box strong {
+        color: #ffffff !important;
+    }
+    
+    /* ========== SIDEBAR ========== */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #2d3436 0%, #636e72 100%) !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stMarkdown"],
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] .stSlider > div > div > div {
+        color: #ffffff !important;
+    }
+    
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.2);
+    }
+    
+    /* ========== BUTTONS ========== */
     .stDownloadButton > button {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%) !important;
-        color: white !important;
+        background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%) !important;
+        color: #ffffff !important;
         border: none !important;
-        border-radius: 8px !important;
-        padding: 0.6rem 1.2rem !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
+        border-radius: 10px !important;
+        padding: 0.8rem 1.5rem !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        box-shadow: 0 4px 15px rgba(108,92,231,0.4) !important;
+        transition: transform 0.2s, box-shadow 0.2s !important;
     }
     
     .stDownloadButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 12px rgba(30,58,95,0.4) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 25px rgba(108,92,231,0.5) !important;
     }
     
-    /* Primary button styling */
     .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        background: linear-gradient(135deg, #00b894 0%, #00cec9 100%) !important;
+        color: #ffffff !important;
         border: none !important;
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        padding: 0.8rem 2rem !important;
-        border-radius: 10px !important;
-        transition: all 0.3s ease !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        padding: 1rem 2.5rem !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 20px rgba(0,184,148,0.4) !important;
+        transition: transform 0.2s, box-shadow 0.2s !important;
     }
     
     .stButton > button[kind="primary"]:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(40,167,69,0.4) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 30px rgba(0,184,148,0.5) !important;
     }
     
-    /* Sidebar styling */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #1e3a5f 0%, #2d5a87 100%);
+    .stButton > button {
+        background: #ffffff !important;
+        color: #6c5ce7 !important;
+        border: 2px solid #6c5ce7 !important;
+        font-weight: 600 !important;
+        border-radius: 10px !important;
+        transition: all 0.2s !important;
     }
     
-    /* Footer */
+    .stButton > button:hover {
+        background: #6c5ce7 !important;
+        color: #ffffff !important;
+    }
+    
+    /* ========== FILE UPLOADER ========== */
+    [data-testid="stFileUploader"] {
+        background: #f8f9fa;
+        border: 3px dashed #6c5ce7;
+        border-radius: 15px;
+        padding: 1.5rem;
+    }
+    
+    [data-testid="stFileUploader"] label {
+        color: #2d3436 !important;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    /* ========== METRICS ========== */
+    [data-testid="stMetric"] {
+        background: linear-gradient(135deg, #f8f9fa, #dfe6e9);
+        padding: 1.2rem;
+        border-radius: 12px;
+        border-left: 5px solid #6c5ce7;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    [data-testid="stMetric"] label {
+        color: #636e72 !important;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    [data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: #2d3436 !important;
+        font-weight: 800;
+        font-size: 1.8rem;
+    }
+    
+    /* ========== TABS ========== */
+    .stTabs [data-baseweb="tab-list"] {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        color: #636e72 !important;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 0.8rem 1.5rem;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #6c5ce7, #a29bfe) !important;
+        border-radius: 8px;
+    }
+    
+    /* ========== TEXT & HEADINGS ========== */
+    .main h1, .main h2, .main h3, .main h4 {
+        color: #2d3436 !important;
+        font-weight: 700;
+    }
+    
+    .main p, .main span, .main label {
+        color: #2d3436 !important;
+    }
+    
+    .stCaption {
+        color: #636e72 !important;
+    }
+    
+    /* ========== VIDEO CONTAINER ========== */
+    .video-container {
+        border: 4px solid #6c5ce7;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    /* ========== FOOTER ========== */
     .footer {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 10px;
+        background: linear-gradient(135deg, #2d3436, #636e72);
+        color: #ffffff !important;
+        padding: 1.5rem;
+        border-radius: 12px;
         text-align: center;
         margin-top: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     
     .footer a {
-        color: #ffd700;
-        text-decoration: none;
+        color: #fdcb6e !important;
+        font-weight: 600;
     }
     
-    /* Video container */
-    .video-container {
-        border: 3px solid #1e3a5f;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    }
-    
-    /* Expander styling */
-    .streamlit-expanderHeader {
-        background: #f0f2f6 !important;
-        border-radius: 8px !important;
-    }
-    
-    /* Hide streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    /* Login/Signup styles */
+    /* ========== LOGIN PAGE ========== */
     .login-container {
         max-width: 450px;
-        margin: 2rem auto;
+        margin: 3rem auto;
         padding: 2.5rem;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    }
-    
-    .login-header {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         text-align: center;
-        margin-bottom: 2rem;
     }
     
     .login-logo {
-        font-size: 3rem;
-        margin-bottom: 0.5rem;
+        font-size: 4rem;
+        margin-bottom: 1rem;
     }
     
     .login-title {
-        color: #1e3a5f;
-        font-size: 2rem;
-        font-weight: 700;
+        color: #2d3436 !important;
+        font-size: 2.5rem;
+        font-weight: 800;
         margin: 0;
+        letter-spacing: 2px;
     }
     
     .login-subtitle {
-        color: #666;
-        font-size: 0.9rem;
-        margin-top: 0.3rem;
+        color: #636e72 !important;
+        font-size: 1rem;
+        margin-top: 0.5rem;
     }
     
-    .auth-tabs {
-        display: flex;
-        margin-bottom: 1.5rem;
-        border-bottom: 2px solid #e0e0e0;
-    }
-    
-    .auth-tab {
-        flex: 1;
-        padding: 0.8rem;
-        text-align: center;
-        cursor: pointer;
-        color: #666;
-        font-weight: 500;
-        transition: all 0.3s;
-    }
-    
-    .auth-tab.active {
-        color: #1e3a5f;
-        border-bottom: 3px solid #1e3a5f;
-    }
-    
+    /* ========== USER WELCOME ========== */
     .user-welcome {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        border-radius: 10px;
-        padding: 0.8rem 1.2rem;
+        background: linear-gradient(135deg, #00b894, #00cec9);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
         margin-bottom: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        box-shadow: 0 4px 15px rgba(0,184,148,0.3);
     }
+    
+    .user-welcome span, .user-welcome strong {
+        color: #ffffff !important;
+    }
+    
+    /* ========== FORMS & INPUTS ========== */
+    .stTextInput input {
+        background: #f8f9fa !important;
+        border: 2px solid #dfe6e9 !important;
+        border-radius: 10px !important;
+        color: #2d3436 !important;
+        padding: 0.8rem !important;
+        font-size: 1rem !important;
+    }
+    
+    .stTextInput input:focus {
+        border-color: #6c5ce7 !important;
+        box-shadow: 0 0 0 3px rgba(108,92,231,0.2) !important;
+    }
+    
+    /* ========== CODE BLOCKS ========== */
+    code {
+        background: #f8f9fa !important;
+        color: #6c5ce7 !important;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+    
+    /* ========== ALERTS ========== */
+    [data-testid="stAlert"] {
+        border-radius: 12px !important;
+        font-weight: 500;
+    }
+    
+    /* ========== PROGRESS BAR ========== */
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #6c5ce7, #a29bfe) !important;
+        border-radius: 10px;
+    }
+    
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
