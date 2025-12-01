@@ -1,13 +1,54 @@
+# app.py (first ~40 lines)
 import streamlit as st
-import cv2
 import tempfile
 import os
 import json
 import uuid
 from datetime import datetime
 import numpy as np
-from ultralytics import YOLO
-import torch
+from PIL import Image
+
+# lazy import helpers
+def get_cv2():
+    import importlib
+    return importlib.import_module("cv2")
+
+def get_yolo():
+    import importlib
+    ultralytics = importlib.import_module("ultralytics")
+    # When you call YOLO, do it as: model = get_yolo().YOLO(weights_path)
+    return ultralytics
+
+def get_torch():
+    import importlib
+    return importlib.import_module("torch")
+
+# Example usage in Streamlit callbacks
+st.title("Object detection")
+
+uploaded = st.file_uploader("Upload image", type=["jpg","jpeg","png"])
+if uploaded is not None:
+    with st.spinner("Processing..."):
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+        tmp.write(uploaded.getvalue())
+        tmp.flush()
+        tmp.close()
+
+        # only import cv2 when needed
+        cv2 = get_cv2()
+        img = cv2.imread(tmp.name)
+        if img is None:
+            st.error("cv2 failed to read the image.")
+        else:
+            st.image(img[:, :, ::-1], channels="RGB")  # show in streamlit
+
+        # only import ultralytics when you actually run detection
+        if st.button("Run detection"):
+            ultralytics = get_yolo()
+            # load model lazily; replace 'yolov8n.pt' with your model path or remote download
+            model = ultralytics.YOLO("yolov8n.pt")
+            results = model(tmp.name)  # or model.predict(...)
+            # then process `results` and display
 
 # Page configuration
 st.set_page_config(
