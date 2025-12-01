@@ -10,7 +10,7 @@ import hashlib
 
 # Page configuration - MUST be first Streamlit command
 st.set_page_config(
-    page_title="Aksha - Railway Object Detection",
+    page_title="AKSHA - Powered by IRIS Aerial",
     page_icon="🚂",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -435,7 +435,7 @@ def show_login_page():
     <div class="login-container">
         <div class="login-logo">🚂</div>
         <h1 class="login-title">AKSHA</h1>
-        <p class="login-subtitle">Railway Infrastructure Detection System</p>
+        <p class="login-subtitle">Powered by IRIS Aerial</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -662,133 +662,151 @@ def format_predictions_json_with_timestamps(all_detections, fps):
 
 def generate_pdf_report(json_output, class_counts, video_info, processing_time):
     """Generate a PDF report with detection results and timestamps."""
-    from fpdf import FPDF
+    try:
+        from fpdf import FPDF
+    except ImportError:
+        st.error("❌ fpdf module not found. Please install it with: pip install fpdf")
+        return None
     
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    
-    # Title Page
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 24)
-    pdf.cell(0, 20, 'Aksha - Railway Object Detection Report', ln=True, align='C')
-    pdf.set_font('Arial', '', 12)
-    pdf.cell(0, 10, f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', ln=True, align='C')
-    pdf.ln(20)
-    
-    # Video Information Section
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, 'Video Information', ln=True)
-    pdf.set_font('Arial', '', 11)
-    pdf.cell(0, 8, f'Resolution: {video_info["width"]}x{video_info["height"]}', ln=True)
-    pdf.cell(0, 8, f'FPS: {video_info["fps"]}', ln=True)
-    pdf.cell(0, 8, f'Total Frames: {video_info["frames"]}', ln=True)
-    pdf.cell(0, 8, f'Duration: {video_info["duration"]:.1f} seconds', ln=True)
-    pdf.cell(0, 8, f'Processing Time: {processing_time:.1f} seconds', ln=True)
-    pdf.ln(10)
-    
-    # Summary Statistics Section
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, 'Detection Summary', ln=True)
-    pdf.set_font('Arial', '', 11)
-    
-    total_detections = len(json_output.get('predictions', []))
-    pdf.cell(0, 8, f'Total Detections: {total_detections}', ln=True)
-    pdf.ln(5)
-    
-    # Detections by Class
-    pdf.set_font('Arial', 'B', 14)
-    pdf.cell(0, 10, 'Detections by Class:', ln=True)
-    pdf.set_font('Arial', '', 11)
-    
-    for class_name, count in sorted(class_counts.items(), key=lambda x: x[1], reverse=True):
-        pdf.cell(0, 7, f'  - {class_name}: {count}', ln=True)
-    
-    pdf.ln(10)
-    
-    # Detailed Detections Table
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, 'Detailed Detection Log', ln=True)
-    pdf.ln(5)
-    
-    # Table Header
-    pdf.set_font('Arial', 'B', 9)
-    pdf.set_fill_color(200, 200, 200)
-    col_widths = [20, 25, 45, 25, 35, 40]
-    headers = ['Frame', 'Timestamp', 'Class', 'Conf.', 'Position (x,y)', 'Size (WxH)']
-    
-    for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 8, header, border=1, fill=True, align='C')
-    pdf.ln()
-    
-    # Table Data
-    pdf.set_font('Arial', '', 8)
-    predictions = json_output.get('predictions', [])
-    
-    # Limit to prevent extremely large PDFs
-    max_rows = 500
-    for i, pred in enumerate(predictions[:max_rows]):
-        if pdf.get_y() > 270:  # Check if we need a new page
-            pdf.add_page()
-            # Re-add header
-            pdf.set_font('Arial', 'B', 9)
-            for j, header in enumerate(headers):
-                pdf.cell(col_widths[j], 8, header, border=1, fill=True, align='C')
-            pdf.ln()
-            pdf.set_font('Arial', '', 8)
+    try:
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
         
-        pdf.cell(col_widths[0], 7, str(pred.get('frame', '')), border=1, align='C')
-        pdf.cell(col_widths[1], 7, pred.get('timestamp', ''), border=1, align='C')
-        pdf.cell(col_widths[2], 7, pred.get('class', '')[:20], border=1, align='L')
-        pdf.cell(col_widths[3], 7, f"{pred.get('confidence', 0):.2f}", border=1, align='C')
-        pdf.cell(col_widths[4], 7, f"({pred.get('x', 0):.0f}, {pred.get('y', 0):.0f})", border=1, align='C')
-        pdf.cell(col_widths[5], 7, f"{pred.get('width', 0):.0f} x {pred.get('height', 0):.0f}", border=1, align='C')
-        pdf.ln()
-    
-    if len(predictions) > max_rows:
+        # Title Page
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 24)
+        pdf.cell(0, 20, 'AKSHA - Detection Report', ln=True, align='C')
+        pdf.set_font('Arial', 'I', 12)
+        pdf.cell(0, 8, 'Powered by IRIS Aerial', ln=True, align='C')
+        pdf.set_font('Arial', '', 12)
+        pdf.cell(0, 10, f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', ln=True, align='C')
+        pdf.ln(20)
+        
+        # Video Information Section
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(0, 10, 'Video Information', ln=True)
+        pdf.set_font('Arial', '', 11)
+        pdf.cell(0, 8, f'Resolution: {video_info["width"]}x{video_info["height"]}', ln=True)
+        pdf.cell(0, 8, f'FPS: {video_info["fps"]}', ln=True)
+        pdf.cell(0, 8, f'Total Frames: {video_info["frames"]}', ln=True)
+        pdf.cell(0, 8, f'Duration: {video_info["duration"]:.1f} seconds', ln=True)
+        pdf.cell(0, 8, f'Processing Time: {processing_time:.1f} seconds', ln=True)
+        pdf.ln(10)
+        
+        # Summary Statistics Section
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(0, 10, 'Detection Summary', ln=True)
+        pdf.set_font('Arial', '', 11)
+        
+        total_detections = len(json_output.get('predictions', []))
+        pdf.cell(0, 8, f'Total Detections: {total_detections}', ln=True)
         pdf.ln(5)
-        pdf.set_font('Arial', 'I', 10)
-        pdf.cell(0, 8, f'Note: Showing first {max_rows} of {len(predictions)} detections. See JSON for complete data.', ln=True)
-    
-    # Timeline Summary (group by timestamp)
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, 'Detection Timeline Summary', ln=True)
-    pdf.ln(5)
-    
-    # Group detections by second
-    timeline = {}
-    for pred in predictions:
-        second = int(pred.get('timestamp_seconds', 0))
-        if second not in timeline:
-            timeline[second] = {}
-        class_name = pred.get('class', 'Unknown')
-        timeline[second][class_name] = timeline[second].get(class_name, 0) + 1
-    
-    pdf.set_font('Arial', '', 10)
-    for second in sorted(timeline.keys()):
-        classes_at_second = timeline[second]
-        classes_str = ', '.join([f"{name}: {count}" for name, count in classes_at_second.items()])
         
-        minutes = second // 60
-        secs = second % 60
-        time_str = f"{minutes:02d}:{secs:02d}"
+        # Detections by Class
+        pdf.set_font('Arial', 'B', 14)
+        pdf.cell(0, 10, 'Detections by Class:', ln=True)
+        pdf.set_font('Arial', '', 11)
         
-        if pdf.get_y() > 270:
-            pdf.add_page()
+        for class_name, count in sorted(class_counts.items(), key=lambda x: x[1], reverse=True):
+            pdf.cell(0, 7, f'  - {class_name}: {count}', ln=True)
         
-        pdf.set_font('Arial', 'B', 10)
-        pdf.cell(25, 7, time_str, ln=False)
-        pdf.set_font('Arial', '', 9)
-        pdf.multi_cell(0, 7, classes_str)
-    
-    # Output PDF to bytes
-    pdf_output = BytesIO()
-    pdf_bytes = pdf.output(dest='S').encode('latin-1')
-    pdf_output.write(pdf_bytes)
-    pdf_output.seek(0)
-    
-    return pdf_output
+        pdf.ln(10)
+        
+        # Detailed Detections Table
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(0, 10, 'Detailed Detection Log', ln=True)
+        pdf.ln(5)
+        
+        # Table Header
+        pdf.set_font('Arial', 'B', 9)
+        pdf.set_fill_color(200, 200, 200)
+        col_widths = [20, 25, 45, 25, 35, 40]
+        headers = ['Frame', 'Timestamp', 'Class', 'Conf.', 'Position (x,y)', 'Size (WxH)']
+        
+        for i, header in enumerate(headers):
+            pdf.cell(col_widths[i], 8, header, border=1, fill=True, align='C')
+        pdf.ln()
+        
+        # Table Data
+        pdf.set_font('Arial', '', 8)
+        predictions = json_output.get('predictions', [])
+        
+        # Limit to prevent extremely large PDFs
+        max_rows = 500
+        for i, pred in enumerate(predictions[:max_rows]):
+            if pdf.get_y() > 270:  # Check if we need a new page
+                pdf.add_page()
+                # Re-add header
+                pdf.set_font('Arial', 'B', 9)
+                for j, header in enumerate(headers):
+                    pdf.cell(col_widths[j], 8, header, border=1, fill=True, align='C')
+                pdf.ln()
+                pdf.set_font('Arial', '', 8)
+            
+            pdf.cell(col_widths[0], 7, str(pred.get('frame', '')), border=1, align='C')
+            pdf.cell(col_widths[1], 7, pred.get('timestamp', ''), border=1, align='C')
+            pdf.cell(col_widths[2], 7, pred.get('class', '')[:20], border=1, align='L')
+            pdf.cell(col_widths[3], 7, f"{pred.get('confidence', 0):.2f}", border=1, align='C')
+            pdf.cell(col_widths[4], 7, f"({pred.get('x', 0):.0f}, {pred.get('y', 0):.0f})", border=1, align='C')
+            pdf.cell(col_widths[5], 7, f"{pred.get('width', 0):.0f} x {pred.get('height', 0):.0f}", border=1, align='C')
+            pdf.ln()
+        
+        if len(predictions) > max_rows:
+            pdf.ln(5)
+            pdf.set_font('Arial', 'I', 10)
+            pdf.cell(0, 8, f'Note: Showing first {max_rows} of {len(predictions)} detections. See JSON for complete data.', ln=True)
+        
+        # Timeline Summary (group by timestamp)
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(0, 10, 'Detection Timeline Summary', ln=True)
+        pdf.ln(5)
+        
+        # Group detections by second
+        timeline = {}
+        for pred in predictions:
+            second = int(pred.get('timestamp_seconds', 0))
+            if second not in timeline:
+                timeline[second] = {}
+            class_name = pred.get('class', 'Unknown')
+            timeline[second][class_name] = timeline[second].get(class_name, 0) + 1
+        
+        pdf.set_font('Arial', '', 10)
+        for second in sorted(timeline.keys()):
+            classes_at_second = timeline[second]
+            classes_str = ', '.join([f"{name}: {count}" for name, count in classes_at_second.items()])
+            
+            minutes = second // 60
+            secs = second % 60
+            time_str = f"{minutes:02d}:{secs:02d}"
+            
+            if pdf.get_y() > 270:
+                pdf.add_page()
+            
+            pdf.set_font('Arial', 'B', 10)
+            pdf.cell(25, 7, time_str, ln=False)
+            pdf.set_font('Arial', '', 9)
+            pdf.multi_cell(0, 7, classes_str)
+        
+        # Output PDF to bytes
+        pdf_output = BytesIO()
+        
+        # For fpdf 1.7.2, use dest='S' to get string output
+        pdf_string = pdf.output(dest='S')
+        if isinstance(pdf_string, str):
+            pdf_bytes = pdf_string.encode('latin-1')
+        else:
+            pdf_bytes = bytes(pdf_string)
+        
+        pdf_output.write(pdf_bytes)
+        pdf_output.seek(0)
+        
+        return pdf_output
+
+    except Exception as e:
+        st.error(f"❌ PDF generation error: {str(e)}")
+        return None
 
 
 def process_video_local(model, device, class_names, video_path, confidence_threshold, overlap_threshold, opacity_threshold, frame_skip, input_size, progress_bar, status_text):
@@ -891,8 +909,8 @@ def main():
         st.markdown("""
         <div class="main-header">
             <h1 class="brand-title">🚂 AKSHA</h1>
-            <p class="brand-subtitle">Railway Infrastructure Object Detection System</p>
-            <p class="brand-tagline">Powered by Advanced AI & Computer Vision</p>
+            <p class="brand-subtitle">Powered by IRIS Aerial</p>
+            <p class="brand-tagline">Advanced AI & Computer Vision</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -918,7 +936,7 @@ def main():
     st.sidebar.markdown("""
     <div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #1e3a5f, #2d5a87); border-radius: 10px; margin-bottom: 1rem;">
         <h2 style="color: white; margin: 0;">⚙️ AKSHA</h2>
-        <p style="color: #a8d5ff; font-size: 0.8rem; margin: 0;">Control Panel</p>
+        <p style="color: #a8d5ff; font-size: 0.8rem; margin: 0;">Powered by IRIS Aerial</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1214,8 +1232,8 @@ def main():
     # Footer
     st.markdown("""
     <div class="footer">
-        <p style="margin: 0; font-size: 1.1rem;"><strong>AKSHA</strong> - Railway Infrastructure Detection System</p>
-        <p style="margin: 0.3rem 0; font-size: 0.9rem;">Powered by YOLOv8 | Built with Streamlit</p>
+        <p style="margin: 0; font-size: 1.1rem;"><strong>AKSHA</strong> - Powered by IRIS Aerial</p>
+        <p style="margin: 0.3rem 0; font-size: 0.9rem;">YOLOv8 | Built with Streamlit</p>
         <p style="margin: 0; font-size: 0.8rem; color: #a8d5ff;">© 2024 All Rights Reserved</p>
     </div>
     """, unsafe_allow_html=True)
