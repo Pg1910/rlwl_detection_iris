@@ -1,4 +1,3 @@
-# app.py (first ~40 lines)
 import streamlit as st
 import tempfile
 import os
@@ -6,79 +5,40 @@ import json
 import uuid
 from datetime import datetime
 import numpy as np
-from PIL import Image
 
-# lazy import helpers
-def get_cv2():
-    import importlib
-    return importlib.import_module("cv2")
-
-def get_yolo():
-    import importlib
-    ultralytics = importlib.import_module("ultralytics")
-    # When you call YOLO, do it as: model = get_yolo().YOLO(weights_path)
-    return ultralytics
-
-def get_torch():
-    import importlib
-    return importlib.import_module("torch")
-
-# Example usage in Streamlit callbacks
-st.title("Object detection")
-
-uploaded = st.file_uploader("Upload image", type=["jpg","jpeg","png"])
-if uploaded is not None:
-    with st.spinner("Processing..."):
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-        tmp.write(uploaded.getvalue())
-        tmp.flush()
-        tmp.close()
-
-        # only import cv2 when needed
-        cv2 = get_cv2()
-        img = cv2.imread(tmp.name)
-        if img is None:
-            st.error("cv2 failed to read the image.")
-        else:
-            st.image(img[:, :, ::-1], channels="RGB")  # show in streamlit
-
-        # only import ultralytics when you actually run detection
-        if st.button("Run detection"):
-            ultralytics = get_yolo()
-            # load model lazily; replace 'yolov8n.pt' with your model path or remote download
-            model = ultralytics.YOLO("yolov8n.pt")
-            results = model(tmp.name)  # or model.predict(...)
-            # then process `results` and display
-
-# Page configuration
+# Page configuration - MUST be first Streamlit command
 st.set_page_config(
     page_title="Railway Object Detection",
     page_icon="🚂",
     layout="wide"
 )
 
+# Lazy imports to avoid import errors on Streamlit Cloud
+@st.cache_resource
+def load_cv2():
+    """Lazy load OpenCV."""
+    import cv2
+    return cv2
+
+@st.cache_resource
+def load_torch():
+    """Lazy load PyTorch."""
+    import torch
+    return torch
+
+@st.cache_resource
+def load_yolo():
+    """Lazy load YOLO from ultralytics."""
+    from ultralytics import YOLO
+    return YOLO
+
 # Color palette for different classes (BGR format for OpenCV)
 COLORS = [
-    (0, 255, 0),     # Green
-    (255, 165, 0),   # Orange
-    (139, 69, 19),   # Brown
-    (128, 128, 128), # Gray
-    (255, 0, 0),     # Red
-    (144, 238, 144), # Light Green
-    (169, 169, 169), # Dark Gray
-    (255, 255, 0),   # Yellow
-    (255, 0, 255),   # Magenta
-    (0, 128, 128),   # Teal
-    (128, 0, 128),   # Purple
-    (192, 192, 192), # Silver
-    (0, 0, 128),     # Navy
-    (128, 128, 0),   # Olive
-    (0, 255, 255),   # Cyan
-    (75, 0, 130),    # Indigo
-    (34, 139, 34),   # Forest Green
-    (70, 130, 180),  # Steel Blue
-    (255, 192, 203), # Pink
-    (0, 191, 255),   # Deep Sky Blue
+    (0, 255, 0), (255, 165, 0), (139, 69, 19), (128, 128, 128),
+    (255, 0, 0), (144, 238, 144), (169, 169, 169), (255, 255, 0),
+    (255, 0, 255), (0, 128, 128), (128, 0, 128), (192, 192, 192),
+    (0, 0, 128), (128, 128, 0), (0, 255, 255), (75, 0, 130),
+    (34, 139, 34), (70, 130, 180), (255, 192, 203), (0, 191, 255),
 ]
 
 
@@ -89,6 +49,7 @@ def get_color_for_class(class_id):
 
 def get_device():
     """Get the best available device (CUDA GPU or CPU)."""
+    torch = load_torch()
     if torch.cuda.is_available():
         return 'cuda'
     return 'cpu'
@@ -96,22 +57,30 @@ def get_device():
 
 @st.cache_resource
 def load_model_local():
-    """Load the local YOLO model with GPU support."""
+    """Load the local YOLO model."""
+    torch = load_torch()
+    YOLO = load_yolo()
+    
     device = get_device()
-    model = YOLO('weights.pt')
+    
+    # Check if weights file exists
+    weights_path = 'weights.pt'
+    if not os.path.exists(weights_path):
+        st.error(f"❌ Model weights not found at: {weights_path}")
+        st.info("Please ensure 'weights.pt' is in the repository root.")
+        return None, device, {}
+    
+    model = YOLO(weights_path)
     model.to(device)
     
     # Extract class names from the model itself
-    class_names = model.names  # This gets the actual class mapping from the model
+    class_names = model.names
     
     return model, device, class_names
 
 
 def process_frame_local(model, frame, confidence_threshold, overlap_threshold, device, class_names, input_size=640):
     """Process a single frame using local GPU/CPU and return detections."""
-    
-    # Resize frame for better detection (optional, can improve accuracy)
-    original_height, original_width = frame.shape[:2]
     
     # Run inference
     results = model.predict(
@@ -130,7 +99,7 @@ def process_frame_local(model, frame, confidence_threshold, overlap_threshold, d
         boxes = result.boxes
         
         if boxes is not None and len(boxes) > 0:
-            for i, box in enumerate(boxes):
+            for box in boxes:
                 # Get box coordinates (xyxy format)
                 x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                 
@@ -161,13 +130,12 @@ def process_frame_local(model, frame, confidence_threshold, overlap_threshold, d
     return detections
 
 
-def draw_detections(frame, detections, opacity_threshold):
+def draw_detections(cv2, frame, detections, opacity_threshold):
     """Draw bounding boxes, labels, and confidence on the frame."""
     overlay = frame.copy()
     opacity = opacity_threshold / 100.0
     
     for det in detections:
-        # Get detection info
         x_center = det.get('x', 0)
         y_center = det.get('y', 0)
         width = det.get('width', 0)
@@ -235,6 +203,8 @@ def format_predictions_json(all_detections):
 
 def process_video_local(model, device, class_names, video_path, confidence_threshold, overlap_threshold, opacity_threshold, frame_skip, input_size, progress_bar, status_text):
     """Process the entire video using local GPU/CPU and return the output path and detections."""
+    cv2 = load_cv2()
+    
     cap = cv2.VideoCapture(video_path)
     
     if not cap.isOpened():
@@ -256,7 +226,7 @@ def process_video_local(model, device, class_names, video_path, confidence_thres
     
     all_detections = []
     frame_count = 0
-    last_detections = []  # Cache detections for skipped frames
+    last_detections = []
     
     while True:
         ret, frame = cap.read()
@@ -273,20 +243,18 @@ def process_video_local(model, device, class_names, video_path, confidence_thres
         if frame_count % (frame_skip + 1) == 0 or frame_count == 1:
             status_text.text(f"Processing frame {frame_count}/{total_frames} on {device.upper()}")
             
-            # Process frame using local model
             detections = process_frame_local(
                 model, frame, confidence_threshold, overlap_threshold, device, class_names, input_size
             )
             last_detections = detections
         else:
-            # Use cached detections for skipped frames
             status_text.text(f"Skipping frame {frame_count}/{total_frames} (using cached detections)")
             detections = last_detections
         
         all_detections.append(detections)
         
         # Draw detections on frame
-        annotated_frame = draw_detections(frame.copy(), detections, opacity_threshold)
+        annotated_frame = draw_detections(cv2, frame.copy(), detections, opacity_threshold)
         
         # Write frame
         out.write(annotated_frame)
@@ -302,79 +270,73 @@ def main():
     st.title("🚂 Railway Object Detection System")
     st.markdown("---")
     
+    # Load dependencies
+    try:
+        cv2 = load_cv2()
+        torch = load_torch()
+        st.sidebar.success("✅ Dependencies loaded")
+    except Exception as e:
+        st.error(f"❌ Error loading dependencies: {e}")
+        st.stop()
+    
     # Check device and display info
     device = get_device()
     if device == 'cuda':
         gpu_name = torch.cuda.get_device_name(0)
         st.sidebar.success(f"🚀 GPU Enabled: {gpu_name}")
     else:
-        st.sidebar.warning("⚠️ Running on CPU (slower)")
+        st.sidebar.info("💻 Running on CPU")
     
     # Sidebar for configuration
     st.sidebar.header("⚙️ Configuration")
-    
     st.sidebar.markdown("---")
     st.sidebar.subheader("Detection Thresholds")
     
-    # Confidence threshold
     confidence_threshold = st.sidebar.slider(
         "Confidence Threshold (%)",
-        min_value=0,
-        max_value=100,
-        value=50,
+        min_value=0, max_value=100, value=50,
         help="Minimum confidence score for detections"
     )
     
-    # Overlap threshold (IoU)
     overlap_threshold = st.sidebar.slider(
         "Overlap Threshold (%)",
-        min_value=0,
-        max_value=100,
-        value=50,
+        min_value=0, max_value=100, value=50,
         help="Maximum overlap allowed between detections (NMS)"
     )
     
-    # Opacity threshold
     opacity_threshold = st.sidebar.slider(
         "Opacity Threshold (%)",
-        min_value=0,
-        max_value=100,
-        value=75,
+        min_value=0, max_value=100, value=75,
         help="Opacity of bounding box fill"
     )
     
     st.sidebar.markdown("---")
     st.sidebar.subheader("🎛️ Performance Settings")
     
-    # Frame skip option
     frame_skip = st.sidebar.slider(
         "Frame Skip",
-        min_value=0,
-        max_value=10,
-        value=0,
-        help="Number of frames to skip between detections (0 = process every frame). Higher values = faster but less accurate."
+        min_value=0, max_value=10, value=0,
+        help="Number of frames to skip between detections"
     )
     
-    # Input size for detection
     input_size = st.sidebar.selectbox(
         "Detection Input Size",
         options=[320, 416, 512, 640, 768, 1024],
-        index=3,  # Default to 640
-        help="Larger size = more accurate but slower. 640 is recommended."
+        index=3,
+        help="Larger size = more accurate but slower"
     )
     
-    # Debug mode
-    debug_mode = st.sidebar.checkbox(
-        "🐛 Debug Mode",
-        value=False,
-        help="Show model class mappings and raw detection info"
-    )
+    debug_mode = st.sidebar.checkbox("🐛 Debug Mode", value=False)
     
     st.sidebar.markdown("---")
     
-    # Load model to get class names
+    # Load model
     try:
         model, device, class_names = load_model_local()
+        
+        if model is None:
+            st.warning("⚠️ Model not loaded. Please check weights.pt file.")
+            st.stop()
         
         st.sidebar.subheader("📋 Model Class Labels")
         with st.sidebar.expander("View All Classes from Model"):
@@ -383,11 +345,11 @@ def main():
         
         if debug_mode:
             st.info(f"**Model loaded successfully!**\n\nClasses detected: {len(class_names)}")
-            st.json(class_names)
+            st.json(dict(class_names))
             
     except Exception as e:
         st.error(f"Error loading model: {e}")
-        model, class_names = None, {}
+        st.stop()
     
     # Main content area
     col1, col2 = st.columns([2, 1])
@@ -411,7 +373,7 @@ def main():
         - **Input Size:** {input_size}px
         """)
     
-    if uploaded_file is not None and model is not None:
+    if uploaded_file is not None:
         # Save uploaded file temporarily
         temp_input_path = os.path.join(tempfile.gettempdir(), f"input_{uploaded_file.name}")
         with open(temp_input_path, 'wb') as f:
@@ -430,15 +392,12 @@ def main():
         
         st.info(f"**Video Info:** {video_width}x{video_height} | {video_fps} FPS | {video_frames} frames | {video_duration:.1f}s")
         
-        # Display original video
         st.subheader("📹 Original Video Preview")
         st.video(temp_input_path)
         
-        # Estimate processing time
         frames_to_process = video_frames // (frame_skip + 1)
         st.caption(f"📊 Frames to process: {frames_to_process} (with frame skip = {frame_skip})")
         
-        # Process button
         if st.button("🚀 Start Detection", type="primary", use_container_width=True):
             st.subheader("⏳ Processing Video...")
             progress_bar = st.progress(0)
@@ -446,23 +405,14 @@ def main():
             
             start_time = datetime.now()
             
-            # Process video using local GPU/CPU
             output_path, all_detections = process_video_local(
-                model,
-                device,
-                class_names,
-                temp_input_path,
-                confidence_threshold / 100,
-                overlap_threshold / 100,
-                opacity_threshold,
-                frame_skip,
-                input_size,
-                progress_bar,
-                status_text
+                model, device, class_names, temp_input_path,
+                confidence_threshold / 100, overlap_threshold / 100,
+                opacity_threshold, frame_skip, input_size,
+                progress_bar, status_text
             )
             
-            end_time = datetime.now()
-            processing_time = (end_time - start_time).total_seconds()
+            processing_time = (datetime.now() - start_time).total_seconds()
             
             if output_path and os.path.exists(output_path):
                 status_text.text(f"✅ Processing complete on {device.upper()} in {processing_time:.1f}s!")
@@ -470,14 +420,12 @@ def main():
                 st.markdown("---")
                 st.subheader("🎬 Detection Results")
                 
-                # Display output video
                 col1, col2 = st.columns(2)
                 
                 with col1:
                     st.markdown("### Annotated Video")
                     st.video(output_path)
                     
-                    # Download button for video
                     with open(output_path, 'rb') as f:
                         st.download_button(
                             label="📥 Download Annotated Video",
@@ -489,11 +437,9 @@ def main():
                 with col2:
                     st.markdown("### Detection Statistics")
                     
-                    # Calculate statistics
                     total_detections = sum(len(frame_det) for frame_det in all_detections)
                     frames_with_detections = sum(1 for frame_det in all_detections if frame_det)
                     
-                    # Count by class
                     class_counts = {}
                     for frame_det in all_detections:
                         for det in frame_det:
@@ -511,30 +457,23 @@ def main():
                         for class_name, count in sorted(class_counts.items(), key=lambda x: x[1], reverse=True):
                             st.write(f"• **{class_name}**: {count}")
                 
-                # Debug info
                 if debug_mode and all_detections:
                     st.markdown("---")
                     st.subheader("🐛 Debug Info")
-                    
-                    # Show first frame detections
                     first_frame_with_det = next((d for d in all_detections if d), None)
                     if first_frame_with_det:
-                        st.write("**Sample detection (first frame with detections):**")
-                        st.json(first_frame_with_det[:3])  # Show first 3 detections
+                        st.write("**Sample detection:**")
+                        st.json(first_frame_with_det[:3])
                 
-                # JSON Output
                 st.markdown("---")
                 st.subheader("📄 JSON Output")
                 
-                # Format JSON
                 json_output = format_predictions_json(all_detections)
                 json_str = json.dumps(json_output, indent=2)
                 
-                # Display JSON in expandable section
                 with st.expander("View Full JSON Output", expanded=False):
                     st.json(json_output)
                 
-                # Download JSON button
                 st.download_button(
                     label="📥 Download JSON",
                     data=json_str,
@@ -542,7 +481,6 @@ def main():
                     mime="application/json"
                 )
                 
-                # Clean up temp files
                 try:
                     os.remove(temp_input_path)
                 except:
@@ -550,14 +488,11 @@ def main():
             else:
                 st.error("❌ Error processing video. Please try again.")
     
-    # Footer
     st.markdown("---")
     st.markdown(
-        """
-        <div style='text-align: center; color: gray;'>
-            <p>Railway Object Detection System | Powered by YOLOv8 (Local GPU)</p>
-        </div>
-        """,
+        "<div style='text-align: center; color: gray;'>"
+        "<p>Railway Object Detection System | Powered by YOLOv8</p>"
+        "</div>",
         unsafe_allow_html=True
     )
 
