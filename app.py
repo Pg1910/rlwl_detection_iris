@@ -923,6 +923,10 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
+        # Show video preview
+        st.markdown("#### 📹 Video Preview")
+        st.video(temp_input_path)
+        
         frames_to_process = video_frames // (frame_skip + 1)
         st.caption(f"📊 Frames to process: {frames_to_process} (with frame skip = {frame_skip})")
         
