@@ -64,7 +64,9 @@ The model can detect 20 different railway-related objects:
    pip install -r requirements.txt
    ```
 
-## download the model weights from the roboflow using this url https://app.roboflow.com/irisdataset/railway_objects/models/railway_objects/1
+## download the model weights from the roboflow using this url 
+https://app.roboflow.com/irisdataset/railway_objects/models/railway_objects/1
+  
   [recommneded approach ] 
   by locally loading the model , the inference run on your cpu and make the per processing frames go smooth and easier , thus /10 
   lesser time needed for inference compared to the rf api key based inferences .
